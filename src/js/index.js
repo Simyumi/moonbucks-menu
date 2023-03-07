@@ -14,10 +14,10 @@
 // - [x] 확인 버튼을 클릭하면 메뉴가 삭제된다.
 // - [x] 총 메뉴 갯수를 count하여 상단에보여준다.
 // TODO localStorage Read & Write
-// - [ ] localStorage에 데이터를 저장한다.
-// - [ ] 메뉴를 추가할때 저장
-// - [ ] 메뉴를 수정할때 저장
-// - [ ] 메뉴를 삭제할때 저장
+// - [x] localStorage에 데이터를 저장한다.
+// - [x] 메뉴를 추가할때 저장
+// - [x] 메뉴를 수정할때 저장
+// - [x] 메뉴를 삭제할때 저장
 // - [ ] localStorage에 있는 데이터를 읽어준다.
 // TODO 카테고리별 메뉴판관리
 // - [ ] 에스프레소 메뉴판 관리
@@ -35,13 +35,14 @@
 // - [ ] 클릭이벤트에서 가장 가까운 li태그의 class 속성 값에 sold-out을 추가한다.
 
 const $ = (selector) => document.querySelector(selector);
-
+//대상이 너무 길어지지 않도록 $를 사용하여 변수를 만듬
 const store = {
   setLocalStorage(menu) {
     localStorage.setItem("menu", JSON.stringify(menu));
   },
+  //로컬스토리지 에 데이터 저장/ 불러오기
   getLocalStorage() {
-    localStorage.getItem("menu");
+    return JSON.parse(localStorage.getItem("menu"));
   },
 };
 
@@ -50,21 +51,15 @@ function App() {
   // console.log(menu);
   this.menu = [];
   // 상태를 관리 하기 위해 빈 배열로 만듬(메뉴는 여러개이기 때문에 배열로 관리)
-
-  const updateMenuCount = () => {
-    const menuCount = $("#espresso-menu-list").querySelectorAll("li").length;
-    $(".menu-count").innerText = `총 ${menuCount} 개`;
+  //초기화 하는 이유는 어떤 종류의 데이터가 들어오는지에 대하여 명시 하는것
+  this.init = () => {
+    if (store.getLocalStorage().length > 1) {
+      this.menu = store.getLocalStorage();
+    }
+    render();
   };
 
-  const addMenuName = () => {
-    if ($("#espresso-menu-name").value === "") {
-      alert("메뉴를 입력해 주세요!");
-      return;
-    }
-    const espressoMenuName = $("#espresso-menu-name").value;
-    this.menu.push({ name: espressoMenuName });
-    store.setLocalStorage(this.menu);
-    // push를 사용해 새로운 객체를 담을수있다.
+  const render = () => {
     const template = this.menu
       .map((item, index) => {
         return `<li data-menu-id="${index}" class="menu-list-item d-flex items-center py-2">
@@ -88,6 +83,24 @@ function App() {
 
     $("#espresso-menu-list").innerHTML = template;
     updateMenuCount();
+  };
+
+  //페이지 로드시 초기화 하는 메서드 생성
+  const updateMenuCount = () => {
+    const menuCount = $("#espresso-menu-list").querySelectorAll("li").length;
+    $(".menu-count").innerText = `총 ${menuCount} 개`;
+  };
+
+  const addMenuName = () => {
+    if ($("#espresso-menu-name").value === "") {
+      alert("메뉴를 입력해 주세요!");
+      return;
+    }
+    const espressoMenuName = $("#espresso-menu-name").value;
+    this.menu.push({ name: espressoMenuName });
+    store.setLocalStorage(this.menu);
+    // push를 사용해 새로운 객체를 담을수있다.
+    render();
     $("#espresso-menu-name").value = "";
   };
 
@@ -100,10 +113,14 @@ function App() {
     store.setLocalStorage(this.menu);
     $menuName.innerText = updateMenuName;
     //closest 가장 가까운 li태그를 찾는다.
+    //데이터가 상태를 변경하는것은 최소한의 로직으로 변경하는것이 좋다 안그러면 데이터가 많이 꼬일수가있다.
   };
 
   const removeMenuName = (e) => {
     if (confirm("메뉴를 삭제하시겠습니까?")) {
+      const menuId = e.target.closest("li").dataset.menuId;
+      this.menu.splice(menuId, 1);
+      store.setLocalStorage(this.menu);
       e.target.closest("li").remove();
       updateMenuCount();
     }
@@ -136,3 +153,4 @@ function App() {
   });
 }
 const app = new App();
+app.init();
